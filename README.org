@@ -1,0 +1,58 @@
+* 项目简介
+- 运行在 STM32 HAL 环境中的 Simple FOC 示例
+- 通过修改 Arduino AVR Core, 提供一个基于 STM32 HAL 的 Arduino API 环境, 以运行 Simple FOC
+** 项目进度
+*** 已实现
+- SPI 传感器读取
+- I2C 传感器读取
+- BLDC 扭矩(电压)控制
+*** 未实现
+- 电流采样
+- 编码器
+* Modules 源码说明
+** Arduino-FOC-2.2
+- Simple FOC 源码, 基本没有改动
+** ArduinoCore-avr-1.8.7
+- Arduino AVR Core 源码, 部分替换为 STM32 HAL, 提供一个基于 HAL 的 Arduino API 环境
+* 硬件与软件
+** 硬件
+- STM32F10xx High-density 256KBytes
+- AS5600
+- MT6701
+- BLDC
+- Simple FOC mini
+** 软件
+- STM32CubeIDE_2.1.1
+- STM32CubeMX-5.2.0
+- STM32Cube_FW_F1_V1.7.0
+- STM32 ST-LINK Utility
+** 硬件与软件说明
+- 以 256KBytes 版 STM32F10xx 作为演示, 可以替换为更好的芯片
+- 为适配 STM32F10xx, 使用了旧版 CubeMX, 未确认更高版本的 freeRTOS 在 STM32F10xx 上的运行
+** .cproject 额外说明
+- 更高版本的 CubeMX 在重新生成代码时会破环 .cproject 设置, 需要自行手动比较差异恢复设置
+* 项目说明
+** 硬件初始化
+- 由 CubeMX 完成
+- Arduino Core 兼容层未实现任何硬件初始化配置功能, 只能根据提供的句柄使用配置好的硬件资源
+** HAL 硬件资源
+*** TIM_HandleTypeDef
+- 可选用任意定时器
+- 初始化为前 3 通道输出 PWM, 并设置好引脚
+- Simple FOC 的 PWM 实例化中的引脚参数固定为 0, 1, 2, 只对应定时器 PWM 相数, 不对应实际引脚
+*** UART_HandleTypeDef
+- 用于 Simple FOC Commander
+- 需要开启中断, 因为 Arduino Core 中以环形缓冲实现串口收发
+*** SPI_HandleTypeDef
+- 用于 SPI 传感器
+- 建议使用 SPI 传感器
+- Simple FOC 的传感器数据解算设置可能需要根据实际调整
+*** I2C_HandleTypeDef
+- 用于 I2C 传感器
+- 不建议使用 I2C 传感器
+- STM32F10xx AS5600 环境中只能稳定在 100K CLK, 更高可能发生 AS5600 死锁, 需要重新上电进行恢复
+*** GPIO
+- SPI 片选, 驱动板使能等 GPIO 应提前配置引脚, 在 Simple FOC 示例中, 可使用 PIN(port, num) 宏进行设置
+** 软件配置
+- 通过接口函数提供必要的 HAL 硬件资源句柄给 Arduino Core 兼容层
+- SPI, I2C 可以 2 选 1
